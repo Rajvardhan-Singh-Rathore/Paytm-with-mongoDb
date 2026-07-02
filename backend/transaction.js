@@ -1,22 +1,24 @@
 const mongoose = require('mongoose');
 
-const users = require('./db');
-const Account = require('./db');
-export async function MoneyTransfer(fromAccountId,toAccountId,amount){
+const {User,Account} = require('./db');
+const users = User;
+module.exports = async function MoneyTransfer(fromAccountId,toAccountId,amount){
+    let session;
     try{
-        const session = mongoose.startSession();
+        session = await mongoose.startSession();
 
-        (await session).startTransaction()
-        const filterSender = {userId:fromAccountId}
-        const filterReceiver = {userId:toAccountId}
-
-        const receiverAccount = Account.findOne({userId:toAccountId}).session(session);
-        if(!receiverAccount){res.status(404).json({message:'receiver account not found!'});(await session).abortTransaction();return;}
-
-        if(await Account.findOne(filterSender).session(session).balance<amount){
-            res.status(400).json({message:'insufficient balance'});
-            (await session).abortTransaction();
-            return;
+        await session.startTransaction()
+        const filterSender = {_id:fromAccountId}
+        const filterReceiver = {_id:toAccountId}
+        
+        const receiverAccount = await Account.findOne({_id:toAccountId}).session(session);
+        if(!receiverAccount){await session.abortTransaction();return ({message:'receiver account not found!'});}
+        const senderAccount = await Account.findOne(filterSender).session(session)
+        if(!senderAccount){await session.abortTransaction();return ({message:'sender account not found!'});}
+        if(senderAccount.balance<amount){
+            await session.abortTransaction();
+            console.log('insufficient balance');
+            return ({message:'insufficient balance'});
         }
         const updateSender = {
             $inc:{
@@ -28,19 +30,23 @@ export async function MoneyTransfer(fromAccountId,toAccountId,amount){
                 balance:amount
             }
         }
-        await Account.findOneAndUpdate(filterSender,updateSender).session(session);
-        await Account.findOneAndUpdate(filterReceiver,updateReceiver).session(session);
+        await Account.findOneAndUpdate(filterSender,updateSender,{session:session});
+        await Account.findOneAndUpdate(filterReceiver,updateReceiver,{session});
 
-        (await session).commitTransaction()
+        await session.commitTransaction()
         const transact = {
             from:fromAccountId,
             to:toAccountId,
             amount
         }
+        console.log("transfer successfulll");
+        return ({message:'transfer successfull!',transact});
     }catch(err){
-        res.send('Transacion Failed,something went wrong');
-        console.log(err.message);
+        console.log(err);
+        return ({message:'Transacion Failed,something went wrong'});
+    }finally{
+        await session.endSession();
     }
-    res.json({message:'transfer successfull!'},{transact});
-    return;
+    
+    
 }

@@ -6,6 +6,7 @@ const {User} = require('../db')
 const JWT_SECRET = require('../config');
 const isLoggedIn = require('../middlewares/authMiddleware');
 const {Account} = require('../db');
+const MoneyTransfer = require('../transaction');
 
 const users=User;
 
@@ -41,6 +42,7 @@ router.post('/signup',async (req,res)=>{
         balance:(Math.random()*1000).toFixed(2)
     });
     const token = jwt.sign({userId},JWT_SECRET);
+    req.headers.authorization = "Bearer "+token;
     res.json({token:"Bearer "+token,message:'user created successfully!'})
 });
 const signInSchema = z.object({
@@ -103,8 +105,9 @@ router.get('/bulk',async (req,res)=>{
             }
         ]
     })
-    if(allUsers.length==0){res.send('no such user found,you may check and search again');return;}
-    const foundUsers = allUsers.map((el,idx)=>({_id,firstName,lastName}));
+    //if(allUsers.length==0){res.json({message:'no such user found,you may check and search again'});return;}
+
+    const foundUsers = allUsers.map((el,idx)=>({_id:el._id,firstName:el.firstName,lastName:el.lastName}));
     res.json({users:foundUsers});
     return;
 })
@@ -113,9 +116,17 @@ router.get('/balance',isLoggedIn,async (req,res)=>{
     res.json({balance:account.balance});
     return;
 })
-router.post('/transfer',isLoggedIn,(req,res)=>{
-    const {toAccountId,amount} = req.body;
-    const fromAccountId = req.userid;
-    
+router.post('/transfer',isLoggedIn,async (req,res)=>{
+    const {toUserId,amount} = req.body;
+    const toAccount = await Account.findOne({userId:toUserId});
+    const toAccountId = toAccount._id;
+    const fromAccount = await Account.findOne({userId:req.userid});
+    try{
+        const message = await MoneyTransfer(fromAccount._id,toAccountId,amount);
+        res.json({message});
+    }catch(err){
+        console.log(err.message);
+        res.json({error:'some error occured while transfering money!'})
+    }
 })
 module.exports = router;
