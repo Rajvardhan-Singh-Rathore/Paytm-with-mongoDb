@@ -7,11 +7,12 @@ const cors = require('cors');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
-// const corsOptions = {
-//     origin:'http://localhost:5173',
-//     methods:'GET,POST,PUT'
-// }
-app.use(cors());
+const corsOptions = {
+    origin:'https://paytm-with-mongo-db.vercel.app/',
+    methods:'GET,POST,PUT',
+    credentials:true
+}
+app.use(cors(corsOptions));
 app.get('/',(req,res)=>{
     res.redirect('api/v1/user/signup');
 })
