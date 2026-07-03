@@ -11,7 +11,9 @@ app.use(bodyParser.urlencoded({extended:true}));
 //     methods:'GET,POST,PUT'
 // }
 app.use(cors());
-
+app.get('/',(req,res)=>{
+    res.redirect('api/v1/user/signup');
+})
 app.use('/api/v1',mainRouter);
 
 
