@@ -10,7 +10,7 @@ export function Dashboard(){
   const [users,setUsers] = useState([]);
 
   useEffect(()=>{return async()=>{
-    const response = await axios.get('http://localhost:3000/api/v1/user/balance',{
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/user/balance`,{
       headers:{'authorization':localStorage.getItem('token')}
     });
     setBalance(response.data.balance);
@@ -18,7 +18,7 @@ export function Dashboard(){
   const [searchParams] = useSearchParams();
   const search =async(e)=>{
     setFilter(e.target.value);
-    const response = await axios.get(`http://localhost:3000/api/v1/user/bulk?filter=${filter}`);
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/user/bulk?filter=${filter}`);
     if(response.data==undefined){setUser([]);return;}
     setUsers(response.data.users);
   }

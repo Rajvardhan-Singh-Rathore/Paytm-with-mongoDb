@@ -6,7 +6,7 @@ export function SendMoney(){
   const [searchParams] = useSearchParams();
   const [amount,setAmount] = useState(0);
   const onPress = async()=>{
-    await axios.post('http://localhost:3000/api/v1/user/transfer',{
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/user/transfer`,{
       toUserId:searchParams.get('toId'),
       amount:amount
     },{headers:{authorization:localStorage.getItem('token')}})

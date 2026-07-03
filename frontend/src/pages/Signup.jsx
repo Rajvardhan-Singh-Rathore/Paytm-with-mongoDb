@@ -14,7 +14,7 @@ export function Signup(){
 
     const navigate = useNavigate();
     const fetchToken = async()=>{
-        const response = await axios.post('http://localhost:3000/api/v1/user/signup',{
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/user/signup`,{
             username,firstName,lastName,password
         });
         const {token} = response.data;
